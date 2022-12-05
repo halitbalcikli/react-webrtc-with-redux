@@ -1,7 +1,9 @@
 import React from 'react';
-import { MdCallEnd, MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdVideoLabel, MdCamera } from 'react-icons/md';
+import { MdCallEnd, MdMic, MdMicOff, MdVideocam, MdVideocamOff } from 'react-icons/md';
+import { hangUp } from '../../../utils/webRTC/webRTCHandler';
 import ConversationButton from './ConversationButton';
-import { switchForScreenSharingStream, hangUp } from '../../../utils/webRTC/webRTCHandler';
+import { useSelector, useDispatch } from 'react-redux';
+import { setMicrophoneEnabled, setLocalCameraEnabled } from '../../../store/reducers/callReducer'
 
 const styles = {
   buttonContainer: {
@@ -17,30 +19,23 @@ const styles = {
   }
 };
 
-const ConversationButtons = (props) => {
-  const {
-    localStream,
-    localCameraEnabled,
-    localMicrophoneEnabled,
-    setCameraEnabled,
-    setMicrophoneEnabled,
-    screenSharingActive
-  } = props;
+const ConversationButtons = () => {
+  const dispatch = useDispatch();
+
+  const localMicrophoneEnabled = useSelector(state => state.call.localMicrophoneEnabled);
+  const localStream = useSelector(state => state.call.localStream);
+  const localCameraEnabled = useSelector(state => state.call.localCameraEnabled)
 
   const handleMicButtonPressed = () => {
     const micEnabled = localMicrophoneEnabled;
     localStream.getAudioTracks()[0].enabled = !micEnabled;
-    setMicrophoneEnabled(!micEnabled);
+    dispatch(setMicrophoneEnabled(!micEnabled));
   };
 
   const handleCameraButtonPressed = () => {
     const cameraEnabled = localCameraEnabled;
     localStream.getVideoTracks()[0].enabled = !cameraEnabled;
-    setCameraEnabled(!cameraEnabled);
-  };
-
-  const handleScreenSharingButtonPressed = () => {
-    switchForScreenSharingStream();
+    dispatch(setLocalCameraEnabled(!cameraEnabled));
   };
 
   const handleHangUpButtonPressed = () => {
@@ -57,9 +52,6 @@ const ConversationButtons = (props) => {
       </ConversationButton>
       <ConversationButton onClickHandler={handleCameraButtonPressed}>
         {localCameraEnabled ? <MdVideocam style={styles.icon} /> : <MdVideocamOff style={styles.icon} />}
-      </ConversationButton>
-      <ConversationButton onClickHandler={handleScreenSharingButtonPressed}>
-        {screenSharingActive ? <MdCamera style={styles.icon} /> : <MdVideoLabel style={styles.icon} />}
       </ConversationButton>
     </div>
   );

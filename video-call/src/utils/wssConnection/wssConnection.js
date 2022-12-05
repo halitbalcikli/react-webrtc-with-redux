@@ -1,57 +1,86 @@
 import socketClient from 'socket.io-client';
-import store from '../../store/store';
-import * as dashboardActions from '../../store/actions/dashboardActions';
-import * as webRTCHandler from '../webRTC/webRTCHandler';
+import { setActiveUsers } from '../../store/reducers/videoReducer';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { callStates, setCallerUsername, setCallState, setCallingDialogVisible, localStream } from '../../store/reducers/callReducer';
+import * as webRTCHandler from '../webRTC/webRTCHandler'
 
 const SERVER = 'http://localhost:3001';
 
 const broadcastEventTypes = {
   ACTIVE_USERS: 'ACTIVE_USERS',
-  GROUP_CALL_ROOMS: 'GROUP_CALL_ROOMS'
+};
+
+const preOfferAnswers = {
+  CALL_ACCEPTED: 'CALL_ACCEPTED',
+  CALL_REJECTED: 'CALL_REJECTED',
+  CALL_NOT_AVAILABLE: 'CALL_NOT_AVAILABLE'
 };
 
 let socket;
 
-export const connectWithWebSocket = () => {
-  socket = socketClient(SERVER);
+export const useSocketEvents = () => {
+  const dispatch = useDispatch();
 
-  socket.on('connection', () => {
-    console.log('succesfully connected with wss server');
-    console.log(socket.id);
-  });
+  useEffect(() => {
+    socket = socketClient(SERVER);
 
-  socket.on('broadcast', (data) => {
-    handleBroadcastEvents(data);
-  });
+    socket.on('connection', () => {
+      console.log('succesfully connected with wss server');
+      console.log(socket.id);
+    });
 
-  // listeners related with direct call
-  socket.on('pre-offer', (data) => {
-    webRTCHandler.handlePreOffer(data);
-  });
+    socket.on('broadcast', (data) => {
+      switch (data.event) {
+        case broadcastEventTypes.ACTIVE_USERS:
+          const activeUsers = data.activeUsers.filter(activeUser => activeUser.socketId !== socket.id);
+          dispatch(setActiveUsers(activeUsers));
+          break;
+        default:
+          break;
+      }
+    });
 
-  socket.on('pre-offer-answer', (data) => {
-    webRTCHandler.handlePreOfferAnswer(data);
-  });
+    socket.on('pre-offer', (data) => {
+      if (data.call.localStream === null || data.call.callState !== callStates.CALL_AVAILABLE) {
+        sendPreOfferAnswer({
+          callerSocketId: data.callerSocketId,
+          answer: preOfferAnswers.CALL_NOT_AVAILABLE
+        });
+      } else {
+        webRTCHandler.handlePreOffer(data)
+        dispatch(setCallerUsername(data.callerUsername))
+        dispatch(setCallState(callStates.CALL_REQUESTED))
+      }
+    })
 
-  socket.on('webRTC-offer', (data) => {
-    webRTCHandler.handleOffer(data);
-  });
+    socket.on('pre-offer-answer', (data) => {
+      dispatch(setCallingDialogVisible(false));
+      const { rejectionReason } = webRTCHandler.handlePreOfferAnswer(data);
+      console.log("rejectionReason", rejectionReason)
+    });
 
-  socket.on('webRTC-answer', (data) => {
-    webRTCHandler.handleAnswer(data);
-  });
+    socket.on('webRTC-offer', (data) => {
+      webRTCHandler.handleOffer(data);
+    });
 
-  socket.on('webRTC-candidate', (data) => {
-    webRTCHandler.handleCandidate(data);
-  });
+    socket.on('webRTC-answer', (data) => {
+      webRTCHandler.handleAnswer(data);
+    });
 
-  socket.on('user-hanged-up', () => {
-    webRTCHandler.handleUserHangedUp();
-  });
-};
+    socket.on('webRTC-candidate', (data) => {
+      webRTCHandler.handleCandidate(data);
+    });
+
+    socket.on('user-hanged-up', () => {
+      webRTCHandler.handleUserHangedUp();
+    });
+
+  }, [dispatch]);
+}
 
 export const registerNewUser = (username) => {
-  socket.emit('register-new-user', {
+  socket.emit('new_user', {
     username: username,
     socketId: socket.id
   });
@@ -64,6 +93,7 @@ export const sendPreOffer = (data) => {
 };
 
 export const sendPreOfferAnswer = (data) => {
+  console.log("data is here", data)
   socket.emit('pre-offer-answer', data);
 };
 
@@ -83,14 +113,3 @@ export const sendUserHangedUp = (data) => {
   socket.emit('user-hanged-up', data);
 };
 
-const handleBroadcastEvents = (data) => {
-  switch (data.event) {
-    case broadcastEventTypes.ACTIVE_USERS:
-      const activeUsers = data.activeUsers.filter(activeUser => activeUser.socketId !== socket.id);
-      store.dispatch(dashboardActions.setActiveUsers(activeUsers));
-      break;
-    default:
-      break;
-  }
-}
-  ;

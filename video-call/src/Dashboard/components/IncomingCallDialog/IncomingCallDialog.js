@@ -1,16 +1,21 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { acceptIncomingCallRequest, rejectIncomingCallRequest } from '../../../utils/webRTC/webRTCHandler';
 
 import './IncomingCallDialog.css';
 
-const IncomingCallDialog = ({ callerUsername }) => {
+const IncomingCallDialog = () => {
+  const dispatch = useDispatch();
+
   const handleAcceptButtonPressed = () => {
-    acceptIncomingCallRequest();
+    acceptIncomingCallRequest(dispatch);
   };
 
   const handleRejectButtonPressed = () => {
-    rejectIncomingCallRequest();
+    rejectIncomingCallRequest(dispatch);
   };
+
+  const callerUsername = useSelector(state => state.call.callerUsername);
 
   return (
     <div className='direct_call_dialog background_secondary_color'>

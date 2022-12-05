@@ -12,11 +12,6 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: '10px',
-    boxShadow: 'none',
-    borderImage: 'none',
-    borderStyle: 'none',
-    borderWidth: '0px',
-    outline: 'none'
   }
 };
 

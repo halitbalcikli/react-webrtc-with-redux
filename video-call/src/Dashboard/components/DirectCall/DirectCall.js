@@ -1,23 +1,19 @@
 import React from 'react';
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { callStates } from '../../../store/reducers/callReducer';
 import LocalVideoView from '../LocalVideoView/LocalVideoView';
 import RemoteVideoView from '../RemoteVideoView/RemoteVideoView';
 import CallRejectedDialog from '../CallRejectedDialog/CallRejectedDialog';
 import IncomingCallDialog from '../IncomingCallDialog/IncomingCallDialog';
 import CallingDialog from '../CallingDialog/CallingDialog';
-import { callStates, setCallRejected, setLocalCameraEnabled, setLocalMicrophoneEnabled } from '../../../store/actions/callActions';
 import ConversationButtons from '../ConversationButtons/ConversationButtons';
 
-const DirectCall = (props) => {
-  const {
-    localStream,
-    remoteStream,
-    callState,
-    callerUsername,
-    callingDialogVisible,
-    callRejected,
-    hideCallRejectedDialog
-  } = props;
+const DirectCall = () => {
+  const localStream = useSelector(state => state.call.localStream)
+  const callState = useSelector(state => state.call.callState);
+  const remoteStream = useSelector(state => state.call.remoteStream)
+  const callingDialogVisible = useSelector(state => state.call.callingDialogVisible)
+  const callRejected = useSelector(state => state.call.callRejected);
 
   return (
     <>
@@ -25,27 +21,12 @@ const DirectCall = (props) => {
       {remoteStream && callState === callStates.CALL_IN_PROGRESS && <RemoteVideoView remoteStream={remoteStream} />}
       {callRejected.rejected && <CallRejectedDialog
         reason={callRejected.reason}
-        hideCallRejectedDialog={hideCallRejectedDialog}
       />}
-      {callState === callStates.CALL_REQUESTED && <IncomingCallDialog callerUsername={callerUsername} />}
+      {callState === callStates.CALL_REQUESTED && <IncomingCallDialog />}
       {callingDialogVisible && <CallingDialog />}
-      {remoteStream && callState === callStates.CALL_IN_PROGRESS && <ConversationButtons {...props} />}
+      {remoteStream && callState === callStates.CALL_IN_PROGRESS && <ConversationButtons />}
     </>
   );
 };
 
-function mapStoreStateToProps ({ call }) {
-  return {
-    ...call
-  };
-}
-
-function mapDispatchToProps (dispatch) {
-  return {
-    hideCallRejectedDialog: (callRejectedDetails) => dispatch(setCallRejected(callRejectedDetails)),
-    setCameraEnabled: (enabled) => dispatch(setLocalCameraEnabled(enabled)),
-    setMicrophoneEnabled: (enabled) => dispatch(setLocalMicrophoneEnabled(enabled))
-  };
-}
-
-export default connect(mapStoreStateToProps, mapDispatchToProps)(DirectCall);
+export default DirectCall;

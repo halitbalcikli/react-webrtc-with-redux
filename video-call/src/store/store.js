@@ -1,10 +1,12 @@
-import { createStore } from 'redux';
-import mainReducer from './reducer';
-import { composeWithDevTools } from 'redux-devtools-extension';
+import { configureStore } from '@reduxjs/toolkit'
+import videoReducer from './reducers/videoReducer'
+import callReducer from './reducers/callReducer'
 
-const store = createStore(
-  mainReducer,
-  composeWithDevTools()
-);
+const store = configureStore({
+  reducer: {
+    video: videoReducer,
+    call: callReducer
+  },
+})
 
 export default store;

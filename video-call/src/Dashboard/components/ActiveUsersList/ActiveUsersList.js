@@ -1,10 +1,13 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import ActiveUsersListItem from './ActiveUsersListItem';
-import { connect } from 'react-redux';
 
 import './ActiveUsersList.css';
 
-const ActiveUsersList = ({ activeUsers, callState }) => {
+const ActiveUsersList = () => {
+  const activeUsers = useSelector(state => state.video.activeUsers);
+  const callState = useSelector(state => state.call.callState);
+
   return (
     <div className='active_user_list_container'>
       {activeUsers.map((activeUser) =>
@@ -17,9 +20,4 @@ const ActiveUsersList = ({ activeUsers, callState }) => {
   );
 };
 
-const mapStateToProps = ({ dashboard, call }) => ({
-  ...dashboard,
-  ...call
-});
-
-export default connect(mapStateToProps)(ActiveUsersList);
+export default ActiveUsersList;

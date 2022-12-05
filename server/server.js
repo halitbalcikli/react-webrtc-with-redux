@@ -33,11 +33,11 @@ io.on('connection', (socket) => {
     console.log(socket.id)
 
     socket.on('new_user', (data) => {
+        console.log("data", data)
         peers.push({
             username: data.username,
             socketId: data.socketId
         })
-        console.log('registered new user', data);
         console.log(peers);
 
         io.sockets.emit('broadcast', {
@@ -59,9 +59,11 @@ io.on('connection', (socket) => {
     // listener related with direct call
 
     socket.on('pre-offer', (data) => {
+        console.log(" pre-offer data", data)
         io.to(data.callee.socketId).emit('pre-offer', {
             callerUsername: data.caller.username,
-            callerSocketId: socket.id
+            callerSocketId: socket.id,
+            call: data.call
         })
     })
 
